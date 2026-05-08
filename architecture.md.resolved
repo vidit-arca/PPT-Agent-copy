@@ -1,0 +1,101 @@
+# PPT Agent Architecture
+
+This diagram illustrates the high-level workflow of the PPT Agent.
+
+```mermaid
+graph TD
+    %% Data Sources
+    subgraph Inputs ["📥 Data Sources"]
+        Excel[("📊 Excel Data<br/>(.xlsx)")]
+        PPT_Template[("🎞️ PPT Template<br/>(.pptx)")]
+    end
+
+    %% Main System
+    subgraph PPT_Agent ["🤖 PPT Agent (agent.py)"]
+        
+        subgraph Analysis ["🔍 1. Analysis Phase"]
+            direction TB
+            LoadData["Load Data<br/>(pandas)"]
+            Profile["Build Data Profile<br/>(data_profile.py)"]
+            Extract["Extract Template Spec<br/>(template_spec.py)"]
+            
+            LoadData --> Profile
+        end
+
+        subgraph Intelligence ["🧠 2. Semantic Mapping Layer"]
+            direction TB
+            Prompt["Prompt Construction"]
+            LLM{"Local LLM<br/>(Ollama/Mistral)"}
+            Parser{"JSON Parser"}
+            Fallback["Fallback Matching"]
+            MapResult(("Mapping<br/>Object"))
+            
+            Prompt -->|Query| LLM
+            LLM -->|Returns JSON| Parser
+            Parser -->|Valid| MapResult
+            Parser -.->|Invalid / Error| Fallback
+            Fallback -->|Hardcoded Map| MapResult
+        end
+
+        subgraph Generation ["⚙️ 3. Generation Phase"]
+            direction TB
+            Fill["Fill Tables & Slides<br/>(python-pptx)"]
+            Format["Apply Formatting<br/>(Dates, Fonts)"]
+            
+            Fill --> Format
+        end
+        
+        %% Internal Data flow between subgraphs
+        Profile -->|Column Info| Prompt
+        Extract -->|Slide Spec| Prompt
+        MapResult -->|Injection Map| Fill
+    end
+    
+    %% Outputs
+    subgraph Output_Layer ["📤 Output"]
+        Output[("✨ Generated Presentation<br/>(.pptx)")]
+    end
+
+    %% Global Connections
+    Excel --> LoadData
+    PPT_Template --> Extract
+    
+    %% Direct references for filling
+    LoadData -.->|Raw Data| Fill
+    PPT_Template -.->|Layout Base| Fill
+    
+    Format -->|Save| Output
+
+    %% Premium Styling
+    classDef inputNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b,rx:8px;
+    classDef processNode fill:#f9fbe7,stroke:#afb42b,stroke-width:2px,color:#827717,rx:8px;
+    classDef brainNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100,rx:8px;
+    classDef decisionNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f;
+    classDef outputNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20,rx:8px;
+
+    class Excel,PPT_Template inputNode;
+    class LoadData,Profile,Extract,Fill,Format processNode;
+    class Prompt,Fallback,MapResult brainNode;
+    class LLM,Parser decisionNode;
+    class Output outputNode;
+```
+
+## Component Description
+
+1.  **Inputs**:
+    *   **Excel File**: Contains the source data (e.g., "Press Release" sheet).
+    *   **PPT Template**: The master PowerPoint file with pre-defined slides and tables.
+
+2.  **Analysis**:
+    *   **[data_profile.py](file:///Users/apple/Desktop/PPT-Agent%20copy/PPT-Agent-LLM/data_profile.py)**: Scans the Excel file to understand columns and sample data.
+    *   **[template_spec.py](file:///Users/apple/Desktop/PPT-Agent%20copy/PPT-Agent-LLM/template_spec.py)**: Analyzes the PPT template to find slides, shapes, and tables.
+
+3.  **Mapping Logic**:
+    *   **LLM**: Uses a local Ollama instance (Mistral) to intelligently map Excel "Verticals" to specific PPT slides based on title keywords.
+    *   **Fallback**: If the LLM fails or returns invalid JSON, a hardcoded manual mapping is used as a safety net.
+
+4.  **Generation**:
+    *   **[agent.py](file:///Users/apple/Desktop/PPT-Agent%20copy/agent.py)**: Orchestrates the process. It fills the tables in the PPT with Excel data, adds rows dynamically, and applies formatting (date formatting, style preservation).
+
+5.  **Output**:
+    *   A new PowerPoint file with the timestamped filename.

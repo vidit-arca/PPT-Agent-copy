@@ -1,0 +1,70 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+bin/
+include/
+lib/
+lib64/
+share/
+pyvenv.cfg
+
+# Environment variables
+.env
+.env.*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python tools
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+*.egg-info/
+.installed.cfg
+*.egg
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+
+# Generated PowerPoint & Excel files
+*_filled_*.pptx
+tejomaya_filled_*.pptx
+verified_*.pptx
+test_overflow.pptx
+test_issue.pptx
+verified_issue.pptx
+test_data.xlsx
+~$*.pptx
+~$*.xlsx
+
+# Templates (Unignore)
+!Akshayam*.pptx
+
+# Logs & Temporary files
+*.log
+ppt_agent.log
+*.tmp
+*.bak
+*.zip
+
+# Test data / Images
+test_image.png
+verify_output.txt
+data/output/

@@ -1,0 +1,8 @@
+pandas
+python-pptx
+langchain-ollama
+langchain-core
+langchain-openai>=0.1.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+tenacity>=8.0.0
