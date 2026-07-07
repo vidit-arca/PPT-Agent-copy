@@ -16,7 +16,7 @@ class Config:
     
     def __init__(self):
         # LLM Provider Settings
-        self.llm_provider: Literal["openai", "ollama", "azure"] = os.getenv("LLM_PROVIDER", "ollama").lower()
+        self.llm_provider: Literal["openai", "ollama", "azure", "aws"] = os.getenv("LLM_PROVIDER", "ollama").lower()
         self.llm_model: str = os.getenv("LLM_MODEL", self._get_default_model())
         self.llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0"))
         
@@ -55,6 +55,8 @@ class Config:
             return "gpt-4o-mini"  # Cost-effective GPT-4 variant
         elif provider == "azure":
             return "gpt-4o-mini"  # Azure deployment name
+        elif provider == "aws":
+            return "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
         return "mistral"
     
     def _validate(self):
@@ -69,6 +71,12 @@ class Config:
             print("⚠️  OpenAI selected but no API key found. Falling back to Ollama.")
             self.llm_provider = "ollama"
             self.llm_model = "mistral"
+        # If AWS is selected, it implicitly relies on IAM roles or standard AWS env variables (e.g., AWS_PROFILE).
+        
+    def is_aws_available(self) -> bool:
+        """Check if AWS Bedrock is configured and available (assumes AWS CLI/IAM is set up)."""
+        return self.llm_provider == "aws"
+
     
     def is_openai_available(self) -> bool:
         """Check if OpenAI is configured and available."""

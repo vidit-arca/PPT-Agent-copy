@@ -59,6 +59,7 @@ FILE_VERTICAL_MAPPING = {
     "IBBI": "Insolvency and Bankruptcy Code",
     "Companies Act": "Companies Act",
     "RBI": "RBI",
+    "ICAI": "Others during the week",
     # Add more mappings as needed
 }
 
@@ -348,6 +349,13 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
                                 else:
                                     parts.append(str(v))
                     text_val = " ".join(parts)
+                    
+                    if "gist" in header_text.lower():
+                        # Use precomputed bullets if available for more accurate layout estimation
+                        bullets = precomputed_bullets_map.get(text_val)
+                        if bullets:
+                            text_val = "\n".join(bullets)
+                            
                     row_texts.append(text_val)
                     
                     if "contents" in header_text.lower() or "gist" in header_text.lower():
@@ -369,14 +377,11 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
         # Footer reservation removed to allow table to fill slide.
         # Footer overflow will be handled at the end by moving it to a new slide.
 
-        # Use a bottom margin of 0.3 inch to prevent overflow (middle ground)
-        # CRITICAL FIX: Subtract table's top position from available height!
-        # The check_overflow function compares projected_height (which is relative to table top)
-        # against available_space. If we pass full slide height, we ignore that table starts lower down.
+        # Check overflow using dynamic height engine. Assumes minimum 0.2 margin as requested.
         table_top_inches = shape.top.inches
         effective_slide_height = slide_height_inches - table_top_inches
         
-        if layout_engine.check_overflow(current_height, required_height, effective_slide_height, bottom_margin=0.3):
+        if layout_engine.check_overflow(current_height, required_height, effective_slide_height, bottom_margin=0.2):
             logging.info(f"  Overflow at row {i} (SectionHeader={is_section_header})")
             
             # If it's a section header, we definitely want to push it to the next slide
@@ -616,22 +621,21 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
         new_slide = duplicate_slide(prs, slide_idx)
         new_slide_idx = prs.slides.index(new_slide)
         
-        # --- NEWS TABLE LOGIC ---
+        # --- FOOTER REMOVAL LOGIC ---
         # Since we are recursing, THIS slide (slide_idx) is NOT the last one.
-        # We should remove the News Table (if any) from THIS slide.
-        # We assume the News Table is any table that is NOT the main table we just filled.
-        news_table_removed = False
-        # Iterate over a copy of shapes to safely remove
-        for s in list(slide.shapes):
-            if s.has_table and s.shape_id != shape.shape_id:
-                try:
-                    remove_shape(slide, s)
-                    news_table_removed = True
-                except Exception as e:
-                    logging.warning(f"  ⚠ Failed to remove News Table: {e}")
+        # We should remove ALL footer shapes (including the News Table, backgrounds, etc.) from THIS slide.
+        footer_removed = False
+        for s in footer_shapes:
+            try:
+                sp = s.element
+                if sp.getparent() is not None:
+                    sp.getparent().remove(sp)
+                    footer_removed = True
+            except Exception as e:
+                logging.warning(f"  ⚠ Failed to remove footer shape: {e}")
         
-        if news_table_removed:
-            logging.info(f"  Removed News Table from non-last Slide {slide_idx+1}")
+        if footer_removed:
+            logging.info(f"  Removed footer elements from non-last Slide {slide_idx+1}")
         # ------------------------
         
         # Find table on new slide
@@ -761,6 +765,52 @@ def fill_using_mapping(prs: Presentation, df: pd.DataFrame, mapping: dict) -> in
                 
                 # Precompute bullets
                 precomputed_bullets_map = {}
+                # Identify which columns require bullets
+                bullet_cols = []
+                for header_text in header_texts:
+                    if "gist" in header_text.lower():
+                        colspec = header_to_colspec.get(header_text)
+                        if colspec and isinstance(colspec, list):
+                            bullet_cols.extend(colspec)
+                
+                if bullet_cols:
+                    from src.services.ppt.engine import convert_to_bullet_points, format_date
+                    import concurrent.futures
+                    texts_to_bulletize = set()
+                    
+                    for _, row in combined_df.iterrows():
+                        is_section_header = row.get('IsSectionHeader', False)
+                        if is_section_header:
+                            continue
+                        # Build the text that will be bulletized
+                        parts = []
+                        for col_name in bullet_cols:
+                            if col_name in combined_df.columns:
+                                v = row[col_name]
+                                if not pd.isna(v):
+                                    if col_name == "IssueDate":
+                                        parts.append(format_date(v))
+                                    else:
+                                        parts.append(str(v))
+                        val = " ".join(parts)
+                        if val.strip():
+                            texts_to_bulletize.add(val)
+                    
+                    if texts_to_bulletize:
+                        logging.info(f"  Precomputing bullets for {len(texts_to_bulletize)} items concurrently...")
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                            future_to_text = {
+                                executor.submit(convert_to_bullet_points, text): text 
+                                for text in texts_to_bulletize
+                            }
+                            for future in concurrent.futures.as_completed(future_to_text):
+                                text = future_to_text[future]
+                                try:
+                                    bullets = future.result()
+                                    precomputed_bullets_map[text] = bullets
+                                except Exception as exc:
+                                    logging.error(f"  ⚠ Bullet generation generated an exception: {exc}")
+                        logging.info("  ✓ Precomputation complete.")
                 
                 # Track slides before filling
                 slides_before = len(prs.slides)

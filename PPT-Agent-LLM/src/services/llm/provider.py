@@ -177,6 +177,67 @@ class AzureOpenAIProvider(LLMProvider):
         return validated.to_dict() if hasattr(validated, 'to_dict') else validated.model_dump()
 
 
+class AWSBedrockProvider(LLMProvider):
+    """AWS Bedrock provider with structured outputs."""
+    
+    def __init__(self, model_id: str, temperature: float = 0):
+        super().__init__(model_id, temperature)
+        
+        try:
+            from langchain_aws import ChatBedrock
+            
+            # Using us-east-1 since it's the standard for cross-region inference profiles
+            self.client = ChatBedrock(
+                model_id=model_id,
+                model_kwargs={"temperature": temperature},
+                region_name="us-east-1"
+            )
+            self.logger.info(f"✓ Initialized AWS Bedrock provider with model: {model_id}")
+        except ImportError:
+            raise ImportError(
+                "AWS Bedrock provider requires langchain-aws. "
+                "Install with: pip install langchain-aws boto3"
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize AWS Bedrock provider: {e}")
+    
+    def invoke(self, messages: list) -> str:
+        """Invoke AWS Bedrock with messages."""
+        response = self.client.invoke(messages)
+        return response.content
+    
+    def invoke_structured(self, messages: list, response_model: type) -> dict:
+        """
+        Invoke with structured output using Bedrock's structured output capability.
+        Returns validated Pydantic model as dict.
+        """
+        try:
+            # Claude 3.5 Sonnet supports tool use / structured outputs
+            structured_llm = self.client.with_structured_output(response_model)
+            result = structured_llm.invoke(messages)
+            
+            if isinstance(result, response_model):
+                return result.to_dict() if hasattr(result, 'to_dict') else result.model_dump()
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Structured output failed: {e}")
+            # Fallback to regular invoke and manual parsing
+            response_text = self.invoke(messages)
+            import re
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(1)
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(0)
+            import json
+            data = json.loads(response_text)
+            validated = response_model(**data)
+            return validated.to_dict() if hasattr(validated, 'to_dict') else validated.model_dump()
+
+
 class OllamaProvider(LLMProvider):
     """Ollama provider for local models (Mistral, Llama, etc)."""
     
@@ -237,6 +298,19 @@ def get_llm_provider() -> LLMProvider:
     """
     config = get_config()
     logger = logging.getLogger(__name__)
+    
+    # Try AWS Bedrock first if configured
+    if config.is_aws_available():
+        try:
+            return AWSBedrockProvider(
+                model_id=config.llm_model,
+                temperature=config.llm_temperature
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Failed to initialize AWS Bedrock provider: {e}")
+            logger.info("Falling back to other providers...")
+    
+
     
     # Try Azure OpenAI first if configured
     if config.is_azure_available():

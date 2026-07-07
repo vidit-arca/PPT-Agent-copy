@@ -13,13 +13,10 @@ class LayoutEngine:
         self.logger = logging.getLogger(__name__)
         self.llm = get_llm_provider()
         
-        # Constants for estimation (calibrated for Arial 10pt with extra spacing)
-        # Constants for estimation (calibrated for Arial 10pt with extra spacing)
-        # Constants for estimation (calibrated for Arial 10pt with extra spacing)
-        # Constants for estimation (calibrated for Arial 10pt with bullet spacing)
-        self.CHARS_PER_LINE_PER_INCH = 14  # Conservative for bullet-heavy content
-        self.LINE_HEIGHT_INCHES = 0.42     # Accounts for bullet spacing overhead
-        self.PADDING_INCHES = 0.02         # Minimal padding
+        # Constants for estimation (calibrated dynamically to handle Qwen/OpenAI variances)
+        self.CHARS_PER_LINE_PER_INCH = 13  # Safe wrap margin (URLs and long words wrap early)
+        self.LINE_HEIGHT_INCHES = 0.28     # 10pt line height + standard PPT line spacing
+        self.PADDING_INCHES = 0.15         # Internal top/bottom cell margins added by PPT
 
     def estimate_row_height(self, row_data: list, col_widths: list) -> float:
         """
@@ -38,17 +35,22 @@ class LayoutEngine:
             if not text:
                 continue
                 
-            # Calculate lines needed
-            # Simple heuristic: text_length / (width * chars_per_inch)
-            chars_capacity = width * self.CHARS_PER_LINE_PER_INCH
-            lines = max(1, len(text) / max(1, chars_capacity))
+            # Split text by newlines so bullet points are calculated individually
+            paragraphs = str(text).split('\n')
+            total_lines = 0
             
-            # Round up for safety
-            import math
-            lines = math.ceil(lines)
+            for para in paragraphs:
+                para = para.strip()
+                if not para:
+                    continue
+                # Calculate lines needed for this specific bullet point
+                chars_capacity = width * self.CHARS_PER_LINE_PER_INCH
+                para_lines = max(1, len(para) / max(1, chars_capacity))
+                import math
+                total_lines += math.ceil(para_lines)
             
-            # Calculate height
-            height = (lines * self.LINE_HEIGHT_INCHES) + self.PADDING_INCHES
+            # Calculate height using total lines across all paragraphs
+            height = (total_lines * self.LINE_HEIGHT_INCHES) + self.PADDING_INCHES
             max_height = max(max_height, height)
             
         return max_height

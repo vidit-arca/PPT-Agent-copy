@@ -9,12 +9,14 @@ This system automatically fills PowerPoint tables with data from Excel files, ma
 ## Features
 
 ### 🎯 Core Capabilities
+
 - **Automatic Slide Mapping**: Maps Excel verticals to PPT slides using manual configuration or LLM assistance
 - **Smart Data Population**: Fills tables while preserving formatting and fonts
 - **Date Formatting**: Converts dates to DD-MM-YYYY format
 - **Dynamic Row Addition**: Adds table rows as needed
 
 ### 🚀 Advanced Features (New)
+
 - **Overflow Detection**: Monitors when content exceeds slide boundaries
 - **Automatic Slide Duplication**: Creates continuation slides when overflow detected
 - **Content Restructuring**: Splits data across slides intelligently
@@ -65,6 +67,7 @@ The system auto-detects the first `.xlsx` and `.pptx` files in the directory.
 ### Expected Data Format
 
 **Excel File**: Must have a sheet named "Press Release" with columns:
+
 - `Verticals` - The regulatory body (SEBI, RBI, etc.)
 - `IssueDate` - Date of issue
 - `SubCategory` - Type of circular/notification
@@ -72,6 +75,7 @@ The system auto-detects the first `.xlsx` and `.pptx` files in the directory.
 - `Summary` - Detailed description
 
 **PowerPoint Template**: Should have slides with 5-column tables matching headers:
+
 - S. No
 - Date of Issue
 - Rules / circulars / Notifications / Order
@@ -100,11 +104,13 @@ If Ollama with Mistral is running, the system attempts dynamic mapping via LLM. 
 ## How Overflow Handling Works
 
 ### Detection
+
 - Monitors table growth after adding rows
 - Checks if content exceeds slide height (with 0.5" margin)
 - Triggers when any shape would be pushed off-page
 
 ### Duplication Process
+
 1. **Detects Overflow**: Content exceeds boundaries
 2. **Duplicates Slide**: Creates exact copy positioned right after original
 3. **Restructures Content**:
@@ -169,6 +175,7 @@ python verify_overflow.py
 ## Output
 
 Generated files are saved with timestamps:
+
 ```
 tejomaya_filled_YYYYMMDD_HHMMSS.pptx
 ```
@@ -176,19 +183,23 @@ tejomaya_filled_YYYYMMDD_HHMMSS.pptx
 ## Troubleshooting
 
 ### LLM Returns Invalid JSON
+
 - System automatically falls back to manual mapping
 - Ensure `MANUAL_SLIDE_MAPPING` is configured
 
 ### Missing Images on Duplicate Slides
+
 - Resolved in current version
 - Uses deep relationship copying
 
 ### Content Still Overflowing
+
 - Check slide height in template
 - Adjust overflow margin in code (currently 0.5")
 - Verify table positioning
 
 ### No Vertical Found
+
 - Add to `MANUAL_SLIDE_MAPPING`
 - Check Excel "Verticals" column spelling
 
@@ -206,6 +217,7 @@ Internal use - Akshayam Corporate
 ## Recent Updates
 
 ### v2.0 - Overflow Handling (2025-11-21)
+
 - ✅ Automatic overflow detection
 - ✅ Smart slide duplication
 - ✅ Content restructuring across slides
@@ -214,30 +226,16 @@ Internal use - Akshayam Corporate
 - ✅ Duplicate slide positioning fix
 
 ### v1.0 - Core Features
+
 - Basic table population
 - Manual slide mapping
 - Date formatting
 - Font preservation
 
-### For running it on local dir 
-- python main.py --local-only --excel-dir /Users/apple/Desktop/PPT-Agent\ copy/2026-01-12_to_2026-01-18 
+### For running it on local dir
 
+- python main.py --local-only --excel-dir /Users/apple/Desktop/PPT-Agent\ copy/2026-01-12_to_2026-01-18
 
-python3 -m src.core.agent --excel-dir "/Users/apple/Desktop/PPT-Agent copy/2026-04-13_to_2026-04-19" --ppt "Akshayam Tejomaya.pptx" --local-only
+python3 -m src.core.agent --excel-dir "/data/arcaai/vidit/Akshayam/PPT-Agent copy/2026-03-16_to_2026-03-22" --ppt "Akshayam Tejomaya.pptx" --local-only
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+python3 -m src.core.agent --excel-dir "/Users/apple/Desktop/Akshayam/PPT-Agent copy/2026-06-29_to_2026-07-04" --ppt "Akshayam Tejomaya.pptx" --local-only
