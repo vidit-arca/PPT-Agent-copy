@@ -224,7 +224,7 @@ def get_fallback_mapping(template_spec: dict, data_profile: dict) -> dict:
     return {"tables": mappings}
 
 
-def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, header_to_colspec, precomputed_bullets_map, layout_engine=None, full_df=None):
+def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, header_to_colspec, precomputed_bullets_map, layout_engine=None, full_df=None, bottom_margin=0.5):
     """
     Recursively fill data into slides, creating new slides as needed.
     """
@@ -306,7 +306,9 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
     # But for estimation, we should start with the header height.
     # If the table has empty rows, we will remove them later.
     if len(table.rows) > 0:
-        header_height = table.rows[0].height.inches
+        # Template XML header row can have an unrendered placeholder height (e.g. 1.90").
+        # Real rendered header row with 1-2 lines of text is at most 0.5 - 0.6 inches.
+        header_height = min(table.rows[0].height.inches, 0.6)
     else:
         header_height = 0.5 # Fallback
         
@@ -377,11 +379,11 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
         # Footer reservation removed to allow table to fill slide.
         # Footer overflow will be handled at the end by moving it to a new slide.
 
-        # Check overflow using dynamic height engine. Assumes minimum 0.2 margin as requested.
+        # Check overflow using dynamic height engine with 0.8" bottom margin safety
         table_top_inches = shape.top.inches
         effective_slide_height = slide_height_inches - table_top_inches
         
-        if layout_engine.check_overflow(current_height, required_height, effective_slide_height, bottom_margin=0.2):
+        if layout_engine.check_overflow(current_height, required_height, effective_slide_height, bottom_margin=bottom_margin):
             logging.info(f"  Overflow at row {i} (SectionHeader={is_section_header})")
             
             # If it's a section header, we definitely want to push it to the next slide
@@ -665,7 +667,8 @@ def paginate_and_fill(prs, slide_idx, shape_idx, df, headers_map, header_texts, 
             total_updates += paginate_and_fill(
                 prs, new_slide_idx, new_shape_idx, 
                 df_remaining, headers_map, header_texts, header_to_colspec, precomputed_bullets_map, layout_engine,
-                full_df=full_df # Pass full_df for subtitle updates on new slide
+                full_df=full_df, # Pass full_df for subtitle updates on new slide
+                bottom_margin=bottom_margin  # Preserve margin for recursive overflow slides
             )
         else:
             logging.error("  ✗ Could not find table on duplicated slide")
@@ -816,10 +819,20 @@ def fill_using_mapping(prs: Presentation, df: pd.DataFrame, mapping: dict) -> in
                 slides_before = len(prs.slides)
                 
                 # Call recursive filler
+                # IFSCA slides have very long URLs that the height estimator under-counts.
+                # Use a larger bottom_margin so overflow triggers earlier, preventing visual overflow.
+                is_ifsca = any(
+                    "ifsca" in str(spec.get("source_filter", {}).get("Verticals", "")).lower() or
+                    "ifsc" in str(spec.get("source_filter", {}).get("Verticals", "")).lower()
+                    for spec in specs
+                )
+                ifsca_margin = 1.5 if is_ifsca else 0.5
+                
                 updates = paginate_and_fill(
                     prs, current_slide_idx, shape_idx, combined_df, 
                     headers_map, header_texts, header_to_colspec, precomputed_bullets_map,
-                    full_df=combined_df # Pass full dataframe for subtitle counts
+                    full_df=combined_df, # Pass full dataframe for subtitle counts
+                    bottom_margin=ifsca_margin
                 )
                 total_updates += updates
                 

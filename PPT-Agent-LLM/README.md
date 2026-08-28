@@ -1,241 +1,575 @@
 # PPT-Agent-LLM
 
-Smart PowerPoint automation agent that populates presentations with Excel data, featuring automatic table overflow handling.
+> **Smart PowerPoint automation agent** — reads weekly regulatory Excel data and automatically fills the Tejomaya presentation template, handling multi-slide pagination, AI-generated bullet points, and dynamic layout.
 
-## Overview
+---
 
-This system automatically fills PowerPoint tables with data from Excel files, mapping verticals (like SEBI, RBI, Companies Act) to specific slides. When tables overflow, it intelligently duplicates slides and restructures content.
+## Table of Contents
 
-## Features
+1. [What This Does](#1-what-this-does)
+2. [How It Works — Big Picture](#2-how-it-works--big-picture)
+3. [Project Structure](#3-project-structure)
+4. [Prerequisites](#4-prerequisites)
+5. [Setup (Step-by-Step)](#5-setup-step-by-step)
+6. [Running the Agent](#6-running-the-agent)
+7. [Input Format — Excel Files](#7-input-format--excel-files)
+8. [Configuration Guide](#8-configuration-guide)
+9. [Output](#9-output)
+10. [How Overflow / Pagination Works](#10-how-overflow--pagination-works)
+11. [Troubleshooting](#11-troubleshooting)
+12. [Architecture Reference](#12-architecture-reference)
+13. [Changelog](#13-changelog)
 
-### 🎯 Core Capabilities
+---
 
-- **Automatic Slide Mapping**: Maps Excel verticals to PPT slides using manual configuration or LLM assistance
-- **Smart Data Population**: Fills tables while preserving formatting and fonts
-- **Date Formatting**: Converts dates to DD-MM-YYYY format
-- **Dynamic Row Addition**: Adds table rows as needed
+## 1. What This Does
 
-### 🚀 Advanced Features (New)
+Every week, the Akshayam team receives regulatory updates from bodies like SEBI, RBI, IFSCA, MCA, IBBI, and AIF. These updates live in multiple Excel files (one per regulatory body). This agent:
 
-- **Overflow Detection**: Monitors when content exceeds slide boundaries
-- **Automatic Slide Duplication**: Creates continuation slides when overflow detected
-- **Content Restructuring**: Splits data across slides intelligently
-- **Image Preservation**: Maintains logos and images on duplicate slides
-- **Smart Positioning**: Auto-positions content to prevent overflow
+1. **Reads all Excel files** from a weekly folder
+2. **Generates AI bullet points** for each regulatory update (via Ollama or Azure OpenAI)
+3. **Populates the PowerPoint template** (`Akshayam Tejomaya.pptx`) — filling the correct slide's table for each regulatory body
+4. **Handles overflow** — if too many rows exist for one slide, it automatically creates continuation slides
+5. **Saves a timestamped `.pptx`** ready for presentation
 
-## File Structure
+---
+
+## 2. How It Works — Big Picture
+
+```
+Weekly Excel folder
+  ├── SEBI.xlsx       → Slide 5  (SEBI during the week)
+  ├── RBI.xlsx        → Slide 6  (RBI during the week)
+  ├── IFSCA.xlsx      → Slide 7  (IFSC during the week)
+  ├── Companies Act.xlsx → Slide 4
+  ├── IBBI.xlsx       → Slide 8  (Insolvency and Bankruptcy Code)
+  ├── AIF.xlsx        → Slide 9  (Alternate Investment Funds)
+  └── ICAI.xlsx / Listed Companies.xlsx → Slide 10 (Others)
+           │
+           ▼
+    [PPT-Agent-LLM]
+           │
+           ├── Reads each Excel sheet (each sheet = one subdomain, e.g. "Circulars", "Press Release")
+           ├── Generates AI bullet points for "Gist thereof" column
+           ├── Maps each file → slide using FILE_VERTICAL_MAPPING
+           ├── Fills table rows on the correct slide
+           └── Paginates to new slides if content overflows
+           │
+           ▼
+    tejomaya_filled_YYYYMMDD_HHMMSS.pptx
+```
+
+---
+
+## 3. Project Structure
 
 ```
 PPT-Agent-LLM/
-├── agent.py                 # Main application with overflow handling
-├── template_spec.py         # Extracts PPT structure
-├── data_profile.py          # Builds Excel data profile
-├── requirements.txt         # Python dependencies
-├── verify_ppt.py           # Quick PPT verification script
-├── inspect_ppt.py          # Detailed slide inspection tool
-├── reproduce_issue.py      # Test script for overflow scenarios
-├── verify_overflow.py      # Overflow handling verification
-└── test_overflow.pptx      # Test template with two tables
+│
+├── main.py                         # Entry point (just calls src/core/agent.py)
+├── requirements.txt                # Python dependencies
+├── .env                            # LLM configuration (API keys, model names)
+├── Akshayam Tejomaya.pptx          # The PPT template (DO NOT DELETE)
+│
+├── src/
+│   ├── core/
+│   │   └── agent.py                # ⭐ Main logic — mapping, pagination, filling
+│   │
+│   ├── services/
+│   │   ├── ppt/
+│   │   │   ├── engine.py           # PPT manipulation (cells, rows, shapes, slides)
+│   │   │   ├── layout.py           # ⭐ Overflow detection & row height estimation
+│   │   │   └── template.py         # Extracts table structure from the PPT template
+│   │   │
+│   │   ├── llm/
+│   │   │   └── provider.py         # LLM client (Ollama / Azure OpenAI switcher)
+│   │   │
+│   │   ├── text/
+│   │   │   └── processor.py        # AI bullet point generation
+│   │   │
+│   │   ├── data/
+│   │   │   └── profiler.py         # Builds data profile from Excel
+│   │   │
+│   │   └── storage/
+│   │       └── minio_client.py     # MinIO integration (optional cloud storage)
+│   │
+│   ├── config/
+│   │   └── settings.py             # Reads .env config
+│   │
+│   └── utils/
+│       └── logging.py              # Logging setup
+│
+├── templates/                      # (unused currently, for future template variants)
+├── scripts/                        # Utility scripts
+├── data/                           # Scratch data folder
+└── tests/                          # Test scripts
 ```
 
-## Installation
+---
+
+## 4. Prerequisites
+
+Before you start, make sure you have:
+
+| Requirement | Why |
+|---|---|
+| **Python 3.9+** | The agent runs on Python |
+| **Ollama** (local) OR **Azure OpenAI** (cloud) | For AI bullet generation and split decisions |
+| The `Akshayam Tejomaya.pptx` template | The presentation template to fill |
+| Weekly Excel files in a dated folder | Input data |
+
+### Check Python version
 
 ```bash
-# Install dependencies
+python3 --version
+# Should print Python 3.9.x or higher
+```
+
+### Install Ollama (for local AI — recommended for offline use)
+
+Download from: https://ollama.com/download
+
+Then pull the model used by this project:
+
+```bash
+ollama pull qwen2.5-coder:7b
+```
+
+Start Ollama (it runs as a background service after installation on macOS):
+
+```bash
+ollama serve
+```
+
+---
+
+## 5. Setup (Step-by-Step)
+
+### Step 1 — Clone / navigate to the project
+
+```bash
+cd "/Users/apple/Desktop/Akshayam/PPT-Agent copy/PPT-Agent-LLM"
+```
+
+### Step 2 — Create a virtual environment (recommended)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate       # macOS/Linux
+# OR on Windows:
+# venv\Scripts\activate
+```
+
+### Step 3 — Install dependencies
+
+```bash
 pip install -r requirements.txt
-
-# Requires Ollama with Mistral model (optional for LLM mapping)
-# Download from: https://ollama.ai
 ```
 
-## Usage
+This installs:
+- `pandas` — Excel reading
+- `python-pptx` — PowerPoint manipulation
+- `langchain-ollama` + `langchain-openai` — LLM integration
+- `pydantic` — Structured LLM outputs
+- `python-dotenv` — Load `.env` config
+- `tenacity` — Retry logic for LLM calls
 
-### Basic Usage
+### Step 4 — Configure the `.env` file
+
+Open `.env` and set your LLM provider:
+
+```env
+# Choose: "ollama" for local, "azure" for Azure OpenAI
+LLM_PROVIDER=ollama
+
+# Model name for Ollama
+LLM_MODEL=qwen2.5-coder:7b
+
+# Ollama server URL (default if running locally)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# --- OR if using Azure OpenAI ---
+LLM_PROVIDER=azure
+AZURE_OPENAI_API_KEY=your_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_API_VERSION=2024-12-01-preview
+AZURE_DEPLOYMENT_NAME=gpt-4.1-mini
+```
+
+> **Note:** If Ollama is running on a different machine on the network, update `OLLAMA_BASE_URL` to that machine's IP (e.g., `http://192.168.1.100:11434`).
+
+### Step 5 — Prepare your weekly Excel folder
+
+Create a folder named after the week's date range and place your Excel files inside:
+
+```
+2026-08-17_to_2026-08-22/
+  ├── SEBI.xlsx
+  ├── RBI.xlsx
+  ├── IFSCA.xlsx
+  ├── IBBI.xlsx
+  ├── AIF.xlsx
+  ├── Companies Act.xlsx
+  ├── ICAI.xlsx
+  └── Listed Companies.xlsx
+```
+
+> Each Excel file can have **multiple sheets** — one per subdomain (e.g., `Circulars`, `Press Release`, `Notifications`).
+
+### Step 6 — Verify the PPT template is present
 
 ```bash
-python agent.py --excel "SEBI.xlsx" --ppt "template.pptx"
+ls "Akshayam Tejomaya.pptx"
+# Should print the filename. If missing, get it from the team.
 ```
 
-### Auto-Detection (if files are in current directory)
+---
+
+## 6. Running the Agent
+
+### ✅ Standard Run (most common)
 
 ```bash
-python agent.py
+python3 -m src.core.agent \
+  --excel-dir "/path/to/your/weekly-folder" \
+  --local-only
 ```
 
-The system auto-detects the first `.xlsx` and `.pptx` files in the directory.
+**Real example:**
 
-### Expected Data Format
+```bash
+python3 -m src.core.agent \
+  --excel-dir "/Users/apple/Desktop/Akshayam/PPT-Agent copy/2026-08-17_to_2026-08-22" \
+  --local-only
+```
 
-**Excel File**: Must have a sheet named "Press Release" with columns:
+### All CLI Options
 
-- `Verticals` - The regulatory body (SEBI, RBI, etc.)
-- `IssueDate` - Date of issue
-- `SubCategory` - Type of circular/notification
-- `Title` - Main content description
-- `Summary` - Detailed description
+| Flag | Description | Example |
+|---|---|---|
+| `--excel-dir PATH` | Path to folder containing all weekly Excel files | `--excel-dir ./2026-08-17_to_2026-08-22` |
+| `--excel PATH` | Path to a single Excel file (single-file mode) | `--excel ./SEBI.xlsx` |
+| `--ppt PATH` | Path to PPT template (auto-detected if not set) | `--ppt "Akshayam Tejomaya.pptx"` |
+| `--local-only` | Skip MinIO cloud storage, use local files only | `--local-only` |
 
-**PowerPoint Template**: Should have slides with 5-column tables matching headers:
+### Using main.py (alternative)
 
-- S. No
-- Date of Issue
-- Rules / circulars / Notifications / Order
-- Contents thereof
-- Gist thereof
+```bash
+python3 main.py \
+  --excel-dir "/path/to/weekly-folder" \
+  --local-only
+```
 
-## Configuration
+---
 
-### Manual Slide Mapping
+## 7. Input Format — Excel Files
 
-Edit `MANUAL_SLIDE_MAPPING` in `agent.py`:
+### File Naming → Vertical Mapping
+
+The filename (without `.xlsx`) determines which slide the data goes to:
+
+| File Name | Vertical | PPT Slide |
+|---|---|---|
+| `SEBI.xlsx` | SEBI | Slide 5 |
+| `RBI.xlsx` | RBI | Slide 6 |
+| `IFSCA.xlsx` | IFSCA | Slide 7 |
+| `Companies Act.xlsx` | Companies Act | Slide 4 |
+| `IBBI.xlsx` | Insolvency and Bankruptcy Code | Slide 8 |
+| `AIF.xlsx` | Alternate Investment Funds | Slide 9 |
+| `ICAI.xlsx` | Others during the week | Slide 10 |
+| `Listed Companies.xlsx` | Others during the week | Slide 10 |
+
+> To add a new file-to-vertical mapping, edit `FILE_VERTICAL_MAPPING` in [`src/core/agent.py`](src/core/agent.py).
+
+### Sheet Names → Subdomains
+
+Each sheet in an Excel file becomes a **subdomain** row category. Common sheet names:
+
+- `Circulars`
+- `Press Release`
+- `Notifications`
+- `Master Directions`
+- `Consultation Paper`
+- `Public Consultation`
+- `FAQs`
+
+### Required Columns (per sheet)
+
+Each sheet must contain these columns:
+
+| Column | Description | Example |
+|---|---|---|
+| `IssueDate` | Date of the circular/notification | `2026-08-20` |
+| `SubCategory` | Type of document | `Circular`, `Press Release` |
+| `PDF_URL` | Link to the PDF document | `https://sebi.gov.in/...pdf` |
+| `Title` | Short title / subject line | `Ease of onboarding for FPIs` |
+| `Summary` | Full description (AI uses this for bullet points) | Long text paragraph |
+
+> The `Verticals` column is **automatically added** by the agent based on the filename — you don't need it in the Excel.
+
+---
+
+## 8. Configuration Guide
+
+### 8.1 Slide Mapping
+
+Edit `MANUAL_SLIDE_MAPPING` in [`src/core/agent.py`](src/core/agent.py) (line ~32):
 
 ```python
 MANUAL_SLIDE_MAPPING = {
-    "Companies Act": 3,  # Slide 4 (0-indexed)
-    "SEBI": 4,           # Slide 5
-    "RBI": 5,            # Slide 6
-    # ... add more mappings
+    "Companies Act": 3,                   # Slide 4 (0-indexed)
+    "SEBI": 4,                            # Slide 5
+    "RBI": 5,                             # Slide 6
+    "IFSC": 6,                            # Slide 7
+    "Insolvency and Bankruptcy Code": 7,  # Slide 8
+    "Alternate Investment Funds": 8,      # Slide 9
+    "Others during the week": 9,          # Slide 10
 }
 ```
 
-### LLM Mapping (Optional)
+> **Note:** Slide indices are **0-based** (so Slide 5 in PowerPoint = index 4 here).
 
-If Ollama with Mistral is running, the system attempts dynamic mapping via LLM. Falls back to manual mapping on failure.
+### 8.2 Adding a New Regulatory Body
 
-## How Overflow Handling Works
+1. Add its Excel filename → vertical mapping in `FILE_VERTICAL_MAPPING`:
+   ```python
+   FILE_VERTICAL_MAPPING = {
+       "NewBody": "New Regulatory Body",  # Add this line
+       ...
+   }
+   ```
 
-### Detection
+2. Add the vertical → slide mapping in `MANUAL_SLIDE_MAPPING`:
+   ```python
+   MANUAL_SLIDE_MAPPING = {
+       "New Regulatory Body": 11,  # Slide 12 in PPT
+       ...
+   }
+   ```
 
-- Monitors table growth after adding rows
-- Checks if content exceeds slide height (with 0.5" margin)
-- Triggers when any shape would be pushed off-page
+3. Add it to the allowed list in `ALLOWED_VERTICALS` (line ~1134 in agent.py):
+   ```python
+   ALLOWED_VERTICALS = [..., "New Regulatory Body"]
+   ```
 
-### Duplication Process
+### 8.3 Overflow / Layout Tuning
 
-1. **Detects Overflow**: Content exceeds boundaries
-2. **Duplicates Slide**: Creates exact copy positioned right after original
-3. **Restructures Content**:
-   - **Original Slide**: Keeps filled table, removes second table
-   - **Duplicate Slide**: Clears first table (keeps header), positions second table with proper spacing
-4. **Preserves Assets**: Copies all images, logos, and formatting
-5. **Cleans Up**: Removes ghost placeholders
+Edit constants in [`src/services/ppt/layout.py`](src/services/ppt/layout.py):
 
-### Example Output
+```python
+self.CHARS_PER_LINE_PER_INCH = 13   # Lower = more lines per bullet → rows estimated taller
+self.LINE_HEIGHT_INCHES = 0.26      # Height per text line in inches
+self.PADDING_INCHES = 0.36          # Cell top/bottom padding
+self.PARA_SPACING_INCHES = 0.20     # Space between bullet points
+```
+
+The overflow check margin (in `agent.py`, line ~386):
+
+```python
+# Default margin for all slides (0.5" from slide bottom)
+bottom_margin=0.5
+
+# IFSCA uses 1.5" because its URLs wrap heavily and overestimate fitting
+ifsca_margin = 1.5 if is_ifsca else 0.5
+```
+
+> **Rule of thumb:** Increase `bottom_margin` if a slide's table visually overflows the white background. Decrease if the table is paginating too early (too many slides created).
+
+### 8.4 LLM Provider
+
+Switch between local Ollama and Azure OpenAI in `.env`:
+
+```env
+# For local (no internet required):
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen2.5-coder:7b
+
+# For Azure OpenAI:
+LLM_PROVIDER=azure
+AZURE_DEPLOYMENT_NAME=gpt-4.1-mini
+```
+
+---
+
+## 9. Output
+
+The agent saves the filled presentation in the project root:
 
 ```
-⚠ OVERFLOW DETECTED on Slide 5!
-Creating overflow slide...
-Removed empty placeholder from duplicate slide (x2)
-Moving 1 shapes to new slide...
-Cleared 4 data rows from Table 1 on new slide (kept header)
-Shifting 1 shapes up by 4.17 inches
-✓ SUCCESS! Filled 4 total rows across all sectors
+tejomaya_filled_20260822_125134.pptx
 ```
 
-## Key Functions
+The file is automatically opened after generation (macOS). You can also open it manually in PowerPoint.
 
-### `agent.py`
+**What gets filled:**
+- ✅ Table rows with S.No, Date, Rules/Circular link, Title, and AI bullet points
+- ✅ Slide subtitle (e.g., `Circulars – 1; Press Release – 4; ...`)
+- ✅ Continuation slides when content overflows
+- ✅ Footer preserved only on the last slide of each section
 
-- **`duplicate_slide(prs, source_slide_index)`**: Duplicates a slide with all content and relationships
-- **`fill_using_mapping(prs, df, mapping)`**: Core data population with overflow handling
-- **`add_table_rows(table, num_rows_to_add)`**: Dynamically adds table rows
-- **`move_shapes_below(slide, table_shape, added_rows_count)`**: Repositions content
-- **`remove_shape(slide, shape)`**: Removes shapes from slides
-- **`get_shapes_below(slide, threshold_top)`**: Finds shapes below a position
-- **`format_date(value)`**: Formats dates to DD-MM-YYYY
-- **`set_cell_text(cell, value)`**: Sets text while preserving formatting
+---
 
-### `template_spec.py`
+## 10. How Overflow / Pagination Works
 
-- **`extract_template_spec(ppt_path, max_slides)`**: Analyzes PPT structure, extracting shapes and tables
+When a regulatory body has more data than fits on one slide, the agent:
 
-### `data_profile.py`
+1. **Estimates row heights** using character count, column widths, and bullet point count
+2. **Detects overflow** when `current_height + next_row_height > slide_height - bottom_margin`
+3. **Duplicates the slide** (copying all shapes, logos, backgrounds, and relationships)
+4. **Fills the current slide** with as many rows as fit
+5. **Clears the duplicate** (keeps only header row) and **recurses** with remaining data
+6. **Removes footer** (news table, bottom decorators) from non-last slides
+7. **AI decides split points** — if two adjacent rows are strongly related, they stay together
 
-- **`build_data_profile(excel_path, sheet_name, sample_rows)`**: Profiles Excel data structure
+```
+Slide 5 (SEBI)          Slide 6 (SEBI cont.)      Slide 7 (SEBI cont.)
+┌──────────────┐        ┌──────────────┐           ┌──────────────┐
+│ Row 1        │        │ Row 4        │           │ Row 7        │
+│ Row 2        │   →    │ Row 5        │   →       │ [footer]     │
+│ Row 3        │        │ Row 6        │           └──────────────┘
+│ [no footer]  │        │ [no footer]  │
+└──────────────┘        └──────────────┘
+```
 
-## Testing
+---
 
-### Test Overflow Handling
+## 11. Troubleshooting
+
+### ❌ `command not found: python3`
+
+Install Python from https://python.org or use `python` instead of `python3`.
+
+### ❌ `ModuleNotFoundError: No module named 'pptx'`
+
+You forgot to install dependencies or activate your virtual environment:
 
 ```bash
-python reproduce_issue.py
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Inspect Generated PPT
+### ❌ Ollama connection refused
+
+Make sure Ollama is running:
 
 ```bash
-python inspect_ppt.py
+ollama serve
+# Then in a new terminal:
+ollama list   # Should show qwen2.5-coder:7b
 ```
 
-### Verify Output
+If Ollama is on another machine, update `OLLAMA_BASE_URL` in `.env` to its IP address.
 
-```bash
-python verify_overflow.py
+### ❌ Table overflowing the white background on a slide
+
+The height estimator is too optimistic for that vertical. Increase `bottom_margin` for it in `agent.py` (see §8.3). IFSCA already has a dedicated fix with `ifsca_margin = 1.5`.
+
+### ❌ Too many continuation slides being created
+
+The estimator is too conservative. Try slightly reducing constants in `layout.py`:
+
+```python
+self.LINE_HEIGHT_INCHES = 0.22   # Try smaller value
+self.PADDING_INCHES = 0.30
 ```
 
-## Output
+### ❌ `No data remaining after filtering`
 
-Generated files are saved with timestamps:
+The `Verticals` column value in your data doesn't match any entry in `ALLOWED_VERTICALS`. Check:
+
+1. What vertical name did the agent assign? Check the log for `Mapped '...' to Vertical: '...'`
+2. Add it to `ALLOWED_VERTICALS` in `agent.py` if it's valid
+
+### ❌ `⚠ Unrecognized subdomain for subtitle: 'Public Consultation'`
+
+This is a **warning, not an error** — the subtitle counter doesn't know this subdomain. The slide still fills correctly. To fix it, add the subdomain alias to `update_slide_subtitle()` in [`src/services/ppt/engine.py`](src/services/ppt/engine.py) under the appropriate `categories` dict.
+
+### ❌ Missing vertical (no mapping found)
 
 ```
-tejomaya_filled_YYYYMMDD_HHMMSS.pptx
+✗ No mapping found for 'XYZ' – add it to MANUAL_SLIDE_MAPPING
 ```
 
-## Troubleshooting
+Follow §8.2 to add the new body.
 
-### LLM Returns Invalid JSON
+---
 
-- System automatically falls back to manual mapping
-- Ensure `MANUAL_SLIDE_MAPPING` is configured
+## 12. Architecture Reference
 
-### Missing Images on Duplicate Slides
+```
+┌─────────────────────────────────────────────────────────┐
+│                    main() in agent.py                    │
+│                                                         │
+│  1. Parse CLI args (--excel-dir, --local-only, etc.)    │
+│  2. Read all Excel files from directory                  │
+│  3. Filter to ALLOWED_VERTICALS                          │
+│  4. Load PPT template                                    │
+│  5. Build mapping (vertical → slide, shape)             │
+│  6. For each target slide:                               │
+│     a. Precompute AI bullets (concurrent)               │
+│     b. Call paginate_and_fill()                          │
+│  7. Save output .pptx                                    │
+└─────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────┐
+│               paginate_and_fill()                        │
+│                                                         │
+│  - Estimates how many rows fit using LayoutEngine       │
+│  - If overflow: duplicate_slide() → recurse             │
+│  - Fills rows using set_cell_text() from engine.py      │
+│  - Updates subtitle using update_slide_subtitle()       │
+└─────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────┐
+│               LayoutEngine (layout.py)                   │
+│                                                         │
+│  - estimate_row_height(): chars/line × height/line      │
+│  - check_overflow(): projected > available - margin     │
+│  - analyze_split_point(): AI decides if rows must stay  │
+│    together across the page break                       │
+└─────────────────────────────────────────────────────────┘
+```
 
-- Resolved in current version
-- Uses deep relationship copying
+### Key Files at a Glance
 
-### Content Still Overflowing
+| File | Purpose |
+|---|---|
+| [`src/core/agent.py`](src/core/agent.py) | Main pipeline — CLI, data loading, mapping, pagination |
+| [`src/services/ppt/layout.py`](src/services/ppt/layout.py) | Row height estimation, overflow detection |
+| [`src/services/ppt/engine.py`](src/services/ppt/engine.py) | Low-level PPT ops (cells, rows, shapes, dates) |
+| [`src/services/ppt/template.py`](src/services/ppt/template.py) | Reads PPT template structure |
+| [`src/services/llm/provider.py`](src/services/llm/provider.py) | LLM client factory (Ollama / Azure) |
+| [`src/services/text/processor.py`](src/services/text/processor.py) | Generates AI bullet points |
+| [`.env`](.env) | LLM API keys and provider selection |
 
-- Check slide height in template
-- Adjust overflow margin in code (currently 0.5")
-- Verify table positioning
+---
 
-### No Vertical Found
+## 13. Changelog
 
-- Add to `MANUAL_SLIDE_MAPPING`
-- Check Excel "Verticals" column spelling
+### v3.0 — Layout & IFSCA Fix (2026-08)
+- ✅ Tuned `LayoutEngine` constants for more accurate row height estimation
+- ✅ `paginate_and_fill` accepts per-slide `bottom_margin` override
+- ✅ IFSCA slides use `bottom_margin=1.5"` to handle long URL wrapping
+- ✅ Default `bottom_margin` reduced from `0.8"` to `0.5"` for all other slides
 
-## Dependencies
+### v2.0 — Overflow Handling (2025-11)
+- ✅ Automatic overflow detection using `LayoutEngine`
+- ✅ Smart slide duplication with image/relationship preservation
+- ✅ Recursive pagination across multiple continuation slides
+- ✅ AI-powered split point decision (keeps related rows together)
+- ✅ Footer removed from non-last overflow slides
+- ✅ Concurrent AI bullet precomputation
 
-- `pandas`: Excel data handling
-- `python-pptx`: PowerPoint manipulation
-- `langchain-ollama`: LLM integration (optional)
-- `langchain-core`: LLM framework (optional)
+### v1.0 — Core Features (2025-05)
+- Basic table population from Excel
+- Manual slide mapping
+- Date formatting (DD-MM-YY)
+- Font and style preservation
+
+---
 
 ## License
 
-Internal use - Akshayam Corporate
-
-## Recent Updates
-
-### v2.0 - Overflow Handling (2025-11-21)
-
-- ✅ Automatic overflow detection
-- ✅ Smart slide duplication
-- ✅ Content restructuring across slides
-- ✅ Image relationship preservation
-- ✅ Placeholder cleanup
-- ✅ Duplicate slide positioning fix
-
-### v1.0 - Core Features
-
-- Basic table population
-- Manual slide mapping
-- Date formatting
-- Font preservation
-
-### For running it on local dir
-
-- python main.py --local-only --excel-dir /Users/apple/Desktop/PPT-Agent\ copy/2026-01-12_to_2026-01-18
-
-python3 -m src.core.agent --excel-dir "/data/arcaai/vidit/Akshayam/PPT-Agent copy/2026-03-16_to_2026-03-22" --ppt "Akshayam Tejomaya.pptx" --local-only
-
-python3 -m src.core.agent --excel-dir "/Users/apple/Desktop/Akshayam/PPT-Agent copy/2026-06-29_to_2026-07-04" --ppt "Akshayam Tejomaya.pptx" --local-only
+Internal use — Akshayam Corporate

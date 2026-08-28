@@ -1,0 +1,137 @@
+Total slides: 17
+
+--- Slide 1 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 28574, Left: 9525, Width: 18278475, Height: 10258425
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 8326119, Left: 14879319, Width: 2885440, Height: 1546860
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 8639754, Left: 12356465, Width: 2012950, Height: 1005205
+  Shape 3: FREEFORM (5) (object 5) - Top: 8534400, Left: 14554200, Width: 0, Height: 1200150
+  Shape 4: PLACEHOLDER (14) (object 6) - Top: 1665604, Left: 1294511, Width: 16377285, Height: 3758565
+  Shape 5: FREEFORM (5) (object 7) - Top: 723899, Left: 762000, Width: 1447800, Height: 1447800
+  Shape 6: PICTURE (13) (object 8) - Top: 6896099, Left: 200025, Width: 4448175, Height: 3390899
+
+--- Slide 2 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 4472241, Left: 3022600, Width: 12061825, Height: 1249680
+  Shape 1: PICTURE (13) (object 3) - Top: 0, Left: 16916400, Width: 1371600, Height: 1323975
+
+--- Slide 3 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 0, Left: 9525, Width: 18278475, Height: 10287000
+  Shape 1: PICTURE (13) (object 3) - Top: 3324225, Left: 7648575, Width: 10639425, Height: 6962773
+  Shape 2: GROUP (6) (object 4) - Top: 457200, Left: 3829050, Width: 10677525, Height: 1685925
+  Shape 3: PLACEHOLDER (14) (object 7) - Top: 479171, Left: 4312665, Width: 9506585, Height: 941069
+  Shape 4: FREEFORM (5) (object 8) - Top: 3429000, Left: 5638800, Width: 7048500, Height: 619125
+  Shape 5: FREEFORM (5) (object 9) - Top: 4333875, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 6: FREEFORM (5) (object 10) - Top: 5286375, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 7: FREEFORM (5) (object 11) - Top: 6238875, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 8: FREEFORM (5) (object 12) - Top: 7191375, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 9: FREEFORM (5) (object 13) - Top: 8143875, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 10: FREEFORM (5) (object 14) - Top: 9096375, Left: 5676900, Width: 7048500, Height: 628650
+  Shape 11: GROUP (6) (object 15) - Top: 0, Left: 0, Width: 18300700, Height: 1417955
+  Shape 12: TEXT_BOX (17) (object 22) - Top: 2128773, Left: 4570095, Width: 9279255, Height: 7296150
+
+--- Slide 4 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 19049, Left: 0, Width: 18288000, Height: 10267950
+  Shape 1: PLACEHOLDER (14) (object 3) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 638702, Left: 2644775, Width: 7212330, Height: 1355725
+  Shape 3: PICTURE (13) (object 5) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: TABLE (19) (object 6) - Top: 8247888, Left: 1345819, Width: 16064230, Height: 1249680
+  Shape 5: PICTURE (13) (object 7) - Top: 0, Left: 16840200, Width: 1447800, Height: 1447800
+  Shape 6: TABLE (19) (object 8) - Top: 2326385, Left: 1266063, Width: 16146780, Height: 2472690
+
+--- Slide 5 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 19049, Left: 0, Width: 18288000, Height: 10267950
+  Shape 1: PLACEHOLDER (14) (object 3) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 430097, Left: 2597785, Width: 6433185, Height: 1541145
+  Shape 3: PICTURE (13) (object 5) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: TABLE (19) (object 6) - Top: 2232532, Left: 1483613, Width: 16137255, Height: 3143885
+  Shape 5: PICTURE (13) (object 7) - Top: 0, Left: 16849725, Width: 1438275, Height: 1390650
+
+--- Slide 6 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 19049, Left: 0, Width: 18288000, Height: 10267950
+  Shape 1: PLACEHOLDER (14) (object 3) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 430097, Left: 2597785, Width: 6433185, Height: 1541145
+  Shape 3: PICTURE (13) (object 5) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: TABLE (19) (object 6) - Top: 2232532, Left: 1483613, Width: 16137255, Height: 3143885
+  Shape 5: PICTURE (13) (object 7) - Top: 0, Left: 16849725, Width: 1438275, Height: 1390650
+
+--- Slide 7 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 19049, Left: 0, Width: 18288000, Height: 10267950
+  Shape 1: PLACEHOLDER (14) (object 3) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 430097, Left: 2597785, Width: 6433185, Height: 1541145
+  Shape 3: PICTURE (13) (object 5) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: TABLE (19) (object 6) - Top: 2232532, Left: 1483613, Width: 16137255, Height: 3143885
+  Shape 5: PICTURE (13) (object 7) - Top: 0, Left: 16849725, Width: 1438275, Height: 1390650
+
+--- Slide 8 ---
+  Shape 0: FREEFORM (5) (object 2) - Top: 19049, Left: 0, Width: 18288000, Height: 10267950
+  Shape 1: PLACEHOLDER (14) (object 3) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 430097, Left: 2597785, Width: 6433185, Height: 1541145
+  Shape 3: PICTURE (13) (object 5) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: PICTURE (13) (object 7) - Top: 0, Left: 16849725, Width: 1438275, Height: 1390650
+  Shape 5: TABLE (19) (object 8) - Top: 2232532, Left: 1317371, Width: 16466185, Height: 1250315
+
+--- Slide 9 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 0, Left: 1192530, Width: 489584, Height: 1123950
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 147961, Left: 2463545, Width: 7250430, Height: 1013460
+  Shape 2: PICTURE (13) (object 4) - Top: 123825, Left: 762000, Width: 1514475, Height: 1514475
+  Shape 3: TABLE (19) (object 5) - Top: 1665604, Left: 1332611, Width: 16377285, Height: 3758565
+  Shape 4: PICTURE (13) (object 6) - Top: 0, Left: 17145000, Width: 1143000, Height: 1390650
+
+--- Slide 10 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 0, Left: 1192530, Width: 489584, Height: 1123950
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 147961, Left: 2463545, Width: 7250430, Height: 1013460
+  Shape 2: PICTURE (13) (object 4) - Top: 123825, Left: 762000, Width: 1514475, Height: 1514475
+  Shape 3: TABLE (19) (object 5) - Top: 1665604, Left: 1332611, Width: 16377285, Height: 3758565
+  Shape 4: PICTURE (13) (object 6) - Top: 0, Left: 17145000, Width: 1143000, Height: 1390650
+
+--- Slide 11 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 0, Left: 1192530, Width: 489584, Height: 1123950
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 147961, Left: 2463545, Width: 7250430, Height: 1013460
+  Shape 2: PICTURE (13) (object 4) - Top: 123825, Left: 762000, Width: 1514475, Height: 1514475
+  Shape 3: TABLE (19) (object 5) - Top: 1665604, Left: 1332611, Width: 16377285, Height: 3758565
+  Shape 4: PICTURE (13) (object 6) - Top: 0, Left: 17145000, Width: 1143000, Height: 1390650
+
+--- Slide 12 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 0, Left: 1192530, Width: 489584, Height: 1123950
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 147961, Left: 2463545, Width: 7250430, Height: 1013460
+  Shape 2: PICTURE (13) (object 4) - Top: 123825, Left: 762000, Width: 1514475, Height: 1514475
+  Shape 3: PICTURE (13) (object 6) - Top: 0, Left: 17145000, Width: 1143000, Height: 1390650
+  Shape 4: TABLE (19) (object 7) - Top: 1665604, Left: 1348486, Width: 16361410, Height: 1138555
+
+--- Slide 13 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 220780, Left: 2585085, Width: 7716520, Height: 1466850
+  Shape 2: TABLE (19) (object 4) - Top: 1862582, Left: 1644650, Width: 16473169, Height: 4748530
+  Shape 3: PICTURE (13) (object 5) - Top: 266700, Left: 838200, Width: 1504950, Height: 1514475
+  Shape 4: PICTURE (13) (object 6) - Top: 0, Left: 17021175, Width: 1266825, Height: 1152525
+
+--- Slide 14 ---
+  Shape 0: GROUP (6) (object 2) - Top: -1, Left: 0, Width: 18302605, Height: 10287000
+  Shape 1: PLACEHOLDER (14) (object 6) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 2: TEXT_BOX (17) (object 7) - Top: 652796, Left: 2610485, Width: 7505700, Height: 1325880
+  Shape 3: PICTURE (13) (object 8) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 4: TABLE (19) (object 9) - Top: 2101850, Left: 1334135, Width: 16146780, Height: 2474595
+  Shape 5: FREEFORM (5) (object 10) - Top: 6734175, Left: 1295400, Width: 16030575, Height: 485775
+  Shape 6: TABLE (19) (object 11) - Top: 6705981, Left: 1267078, Width: 16123285, Height: 1250315
+  Shape 7: PICTURE (13) (object 12) - Top: 0, Left: 17087850, Width: 1200150, Height: 1057275
+
+--- Slide 15 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 148053, Left: 2508250, Width: 7754620, Height: 986790
+  Shape 2: PICTURE (13) (object 4) - Top: 123825, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 3: PICTURE (13) (object 5) - Top: 9525, Left: 17049750, Width: 1238250, Height: 1476375
+  Shape 4: TABLE (19) (object 6) - Top: 4701285, Left: 1187843, Width: 16064230, Height: 1248410
+  Shape 5: TABLE (19) (object 7) - Top: 1850135, Left: 1238885, Width: 16146780, Height: 2472690
+
+--- Slide 16 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: -3175, Left: 1192530, Width: 683894, Height: 1703387
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 602408, Left: 2610485, Width: 6677659, Height: 1120140
+  Shape 2: PICTURE (13) (object 4) - Top: 619125, Left: 809625, Width: 1514475, Height: 1514475
+  Shape 3: TABLE (19) (object 5) - Top: 5642483, Left: 1330960, Width: 16105505, Height: 1247775
+  Shape 4: PICTURE (13) (object 6) - Top: 0, Left: 16964025, Width: 1323975, Height: 1209675
+  Shape 5: TABLE (19) (object 7) - Top: 2278760, Left: 1293367, Width: 16146780, Height: 2472690
+
+--- Slide 17 ---
+  Shape 0: PLACEHOLDER (14) (object 2) - Top: 4019041, Left: 4800600, Width: 9267825, Height: 1856105
+  Shape 1: TEXT_BOX (17) (object 3) - Top: 6816090, Left: 11572493, Width: 3368040, Height: 576580
+  Shape 2: TEXT_BOX (17) (object 4) - Top: 6950138, Left: 4800600, Width: 5193030, Height: 576580
+  Shape 3: PICTURE (13) (object 5) - Top: 1590675, Left: 8153400, Width: 2533650, Height: 2438400

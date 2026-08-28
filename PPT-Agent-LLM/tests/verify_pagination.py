@@ -38,7 +38,9 @@ class TestPagination(unittest.TestCase):
         
         self.table = MagicMock()
         self.shape.table = self.table
-        self.table.rows = [MagicMock()] # Header row
+        header_row = MagicMock()
+        header_row.height.inches = 0.5
+        self.table.rows = [header_row] # Header row
         self.table.columns = [MagicMock(), MagicMock()]
         self.table.columns[0].width.inches = 2.0
         self.table.columns[1].width.inches = 8.0
@@ -72,9 +74,10 @@ class TestPagination(unittest.TestCase):
         # check_overflow(current_height, row_height, ...)
         
         def side_effect_overflow(curr, row, max_h, bottom_margin):
-            # Simulate overflow if we have added 3 rows (current height starts at 2.0, +3*0.5 = 3.5)
-            # Let's say max capacity is 3.5
-            return curr + row > 3.6 
+            # Convert MagicMock or numeric arguments safely
+            c = float(curr) if hasattr(curr, '__float__') and not isinstance(curr, MagicMock) else (curr if isinstance(curr, (int, float)) else 0.5)
+            r = float(row) if hasattr(row, '__float__') and not isinstance(row, MagicMock) else (row if isinstance(row, (int, float)) else 0.5)
+            return c + r > 3.6 
             
         self.layout_engine.check_overflow.side_effect = side_effect_overflow
         
